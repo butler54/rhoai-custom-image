@@ -4,9 +4,14 @@ metadata:
   name: target-custom-minimal-notebook
   namespace: redhat-ods-applications
   annotations:
+    #opendatahub.io/notebook-image-creator: "cluster-admin"
     opendatahub.io/notebook-image-desc: Jupyter notebook image with minimal dependencies and an extra package added 
     opendatahub.io/notebook-image-name: Minimal Python + pypdf
     opendatahub.io/notebook-image-url: https://github.com/butler54/rhoai-custom-image
+    opendatahub.io/recommended-accelerators: '[]'
+  labels:
+    opendatahub.io/dashboard: "true"
+    opendatahub.io/notebook-image: "true"
 spec:
   lookupPolicy:
     local: false

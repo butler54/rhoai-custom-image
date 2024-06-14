@@ -66,3 +66,9 @@ tensorflow                          default-route-openshift-image-registry.apps.
 ```
 
 Use the name and the tags and change in `helm/values.yaml`. Note *latest* will not work on Red Hat provided charts.
+
+
+## Forcing an image build
+If you need to force an image build the following command wil kick one off:
+
+```oc start-build -n redhat-ods-applications custom-image-build```

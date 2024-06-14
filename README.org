@@ -1,98 +1,68 @@
-* Large Language Model (LLM) on OpenShift
+## Custom notebook images for Red Hat OpenShift AI (RHO-AI)
 
-The intent of this repository is to automate the deployment of a large language model and its supporting components on OpenShift.
-
-** Prerequisites
-
-This process assumes you already have an OpenShift 4.12+ running with cluster admin permissions.
-
-You will also need the OpenShift client ~oc~.
+This repository provides a helm chart to build a custom notebook image into Red Hat OpenShift AI.
+It's a simple demonstration of the art of the possible.
+It uses imagebuild streams and build configurations to build a `Containerfile` image hosted in this repository.
+Please be aware that you may need to trigger the build manually from the cluster console or with `oc`.
 
 
-** Step 1 - Install openshift gitops
+## Using this chart:
+You can either run this as a helm install locally or using argocd. 
 
-The goal of this setup process is to be as declarative as possible. With this in mind our first step on the new cluster will be to install the [[https://www.redhat.com/en/technologies/cloud-computing/openshift/gitops][OpenShift GitOps]] operator and create an instance of [[https://argoproj.github.io/cd][ArgoCD]] via the operator, so that all remaining steps can be performed in a GitOps manner.
-
-
-*** 1.1 Login to the cluster
-
-Before we can run any of the following commands, we need to ensure we are logged in. Run the following to do so, updating the placeholder values:
-
-#+begin_src bash :results silent
-oc login --token=<token> \
-         --server=<cluster> 
-         --insecure-skip-tls-verify=true
-#+end_src
+**IMPORTANT** this repo contains a self-reference in order to build the container. If you fork this repo you must change this reference.
 
 
-*** 1.2  Install openshift gitops operator
+### Local install
+Quickest way to get going 
 
-We can programatically install the openshift gitops operator on the cluster in a declaritive way by creating a ~Subscription~ kubernetes custom resource to subscribe a given namespace to the Operator.
+```shell
+oc login ...  ## Login to Openshift with rights to the redhat-ods-applications namespace
+cd rhoai-custom-image
+helm install ./helm
+```
 
-#+begin_src bash :results silent
-cat << EOF | oc apply --filename -
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: openshift-gitops-operator
-  namespace: openshift-operators
-spec:
-  channel: latest
-  installPlanApproval: Automatic
-  name: openshift-gitops-operator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-  config:
-    env:
-    - name: ARGOCD_CLUSTER_CONFIG_NAMESPACES
-      value: openshift-gitops
-EOF
-#+end_src
+The container file should be built within a few minutes from first install.
 
+### With OpenShift GitOps (ArgoCD)
 
-*** 1.3 Update openshift gitops instance rbac
+- [Install OpenShift GitOps](https://docs.openshift.com/gitops/1.12/installing_gitops/installing-openshift-gitops.html) in the `openshift-gitops` namespace (the default).
 
-Once the operator is installed we can apply our ~ArgoCD~ custom resource definition. This will be picked up by the operator and an updated argocd instance will be deployed based on the specification we provided.
+- Deploy the application to target the helm chart. For example if using the `argocd` `cli` for this repository:
 
-The updates below are primarily to rbac, so that we can login via OpenShift SSO and still see applications targeting our local cluster.
-
-#+begin_src bash :results silent
-cat << EOF | oc apply --filename -
-apiVersion: argoproj.io/v1beta1
-kind: ArgoCD
-metadata:
-  name: openshift-gitops
-  namespace: openshift-gitops
-spec:
-  kustomizeBuildOptions: --enable-helm --enable-alpha-plugins
-  rbac:
-    defaultPolicy: role:admin
-    scopes: '[groups]'
-  applicationSet: {}
-  resourceExclusions: |
-    - kinds:
-        - TaskRun
-  server:
-    insecure: true
-    route:
-      enabled: true
-      tls:
-        insecureEdgeTerminationPolicy: Redirect
-        termination: edge
-  sso:
-    dex:
-      openShiftOAuth: true
-    provider: dex
-EOF
-#+end_src
-
-Once the argocd instance has started we can access the web interface via the ~Route~ automatically created by the Operator and click *"Login with OpenShift"*.
-
-#+begin_src bash :results silent
-echo "https://$(oc --namespace openshift-gitops get route openshift-gitops-server --output jsonpath='{.spec.host}')"
-#+end_src
+```shell
+argocd app create rhoai-custom-image \
+    --repo https://github.com/butler54/rhaoi-custom-image \
+    --path helm \
+    --revision main \
+    --dest-server  https://kubernetes.default.svc \
+    --dest-namespace redhat-ods-applications \
+    --directory-recurse \
+    --sync-policy automated \
+    --self-heal \
+    --sync-option Prune=true
+```
 
 
-** Step 2 - Create gitops applicationset
+### Changing the base image
+In order to work with offline environments (and remove credential barriers), the helm chart refers to the images streams which RHO-AI creates.
+You can customize which stream and version is used by this chart.
 
-** REST REMOVED
+To find out what is available on your OpenShift cluster
+
+```
+oc get imagestream -n redhat-ods-applications
+NAME                                IMAGE REPOSITORY                                                                                                            TAGS                                   UPDATED
+code-server-notebook                default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/code-server-notebook                2023.2,2024.1                          27 hours ago
+cuda-rhel9                          default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/cuda-rhel9
+cuda-rstudio-rhel9                  default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/cuda-rstudio-rhel9
+habana-notebook                     default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/habana-notebook                     2023.2,2024.1                          27 hours ago
+minimal-gpu                         default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/minimal-gpu                         1.2,2023.1,2023.2,2024.1               27 hours ago
+odh-trustyai-notebook               default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/odh-trustyai-notebook               2023.1,2023.2,2024.1                   27 hours ago
+pytorch                             default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/pytorch                             1.2,2023.1,2023.2,2024.1               27 hours ago
+rstudio-rhel9                       default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/rstudio-rhel9
+s2i-generic-data-science-notebook   default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/s2i-generic-data-science-notebook   1.2,2023.1,2023.2,2024.1               27 hours ago
+s2i-minimal-notebook                default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/s2i-minimal-notebook                1.2,2023.1,2023.2,2024.1               27 hours ago
+tensorflow                          default-route-openshift-image-registry.apps.myclusterdomain.com/redhat-ods-applications/tensorflow                          1.2,2023.1,2023.2,2024.1               27 hours ago
+```
+
+Use the name and the tags and change in `helm/values.yaml`. Note *latest* will not work on Red Hat provided charts.

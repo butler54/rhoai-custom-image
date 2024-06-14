@@ -1,13 +1,13 @@
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
-  name: target-custom-minimal-notebook
+  name: custom-image-build
   namespace: redhat-ods-applications
 spec:
   source:
     type: Git
     git:
-      uri: https://github.com/butler54/rhoai-custom-image.git
+      uri: {{ .Values.gitRepository }}
     contextDir: helm
   strategy:
     type: Docker                      
@@ -15,11 +15,11 @@ spec:
       dockerfilePath: Containerfile
       from:
         kind: ImageStreamTag  
-        name: source-minimal-notebook:latest
+        name: source-custom-stream:latest
   output:
     to:
       kind: ImageStreamTag
-      name: target-custom-minimal-notebook:latest
+      name: {{ .Values.targetImageName }}-stream:latest
   triggers:
   - type: ImageChange
   - type: ConfigChange

@@ -1,4 +1,6 @@
-FROM source-minimal-notebook:latest
+FROM source-custom-stream:latest
+
+# This container file can easily be extended with more installs as required.
 
 COPY requirements.txt requirements.txt
 

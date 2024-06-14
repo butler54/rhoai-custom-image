@@ -1,13 +1,14 @@
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
-  name: target-custom-minimal-notebook
+  name: {{ .Values.targetImageName }}-stream
   namespace: redhat-ods-applications
   annotations:
     #opendatahub.io/notebook-image-creator: "cluster-admin"
-    opendatahub.io/notebook-image-desc: Jupyter notebook image with minimal dependencies and an extra package added 
-    opendatahub.io/notebook-image-name: Minimal Python + pypdf
-    opendatahub.io/notebook-image-url: https://github.com/butler54/rhoai-custom-image
+    opendatahub.io/notebook-image-desc: {{ .Values.targetImageDesc }}
+    opendatahub.io/notebook-image-name: {{ .Values.targetImageName }}
+    opendatahub.io/notebook-image-url: {{ .Values.gitRepository }}
+    # Adjust accelerator recommendations as needed
     opendatahub.io/recommended-accelerators: '[]'
   labels:
     opendatahub.io/dashboard: "true"

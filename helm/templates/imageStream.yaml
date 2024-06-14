@@ -11,6 +11,6 @@ spec:
     from:
       kind: ImageStreamTag  
       namespace: redhat-ods-applications
-      name: minimal-gpu:1.2
+      name: s2i-minimal-notebook:2024.1
     referencePolicy:
       type: Source

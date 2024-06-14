@@ -1,7 +1,7 @@
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
-  name: target-custom-cuda-notebook2
+  name: target-custom-minimal-notebook
   namespace: redhat-ods-applications
 spec:
   lookupPolicy:

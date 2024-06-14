@@ -1,13 +1,13 @@
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
-  name: target-custom-cuda-notebook2 
+  name: target-custom-minimal-notebook
   namespace: redhat-ods-applications
 spec:
   source:
     type: Git
     git:
-      uri: https://github.com/tnscorcoran/rhoai-custom-image.git
+      uri: https://github.com/butler54/rhoai-custom-image.git
     contextDir: helm
   strategy:
     type: Docker                      
@@ -15,11 +15,11 @@ spec:
       dockerfilePath: Containerfile
       from:
         kind: ImageStreamTag  
-        name: source-cuda-notebook:latest
+        name: source-minimal-notebook:latest
   output:
     to:
       kind: ImageStreamTag
-      name: target-custom-cuda-notebook2:latest
+      name: target-custom-minimal-notebook:latest
   triggers:
   - type: ImageChange
   - type: ConfigChange

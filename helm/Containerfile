@@ -1,9 +1,5 @@
-FROM minimal-gpu:latest
+FROM source-minimal-notebook:latest
 
 COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
-ENV CMAKE_ARGS="-DLLAMA_CUBLAS=on"
-ENV FORCE_CMAKE=1
-ENV BANANAS="ARE COOL"
-RUN pip install llama-cpp-python==0.2.39
